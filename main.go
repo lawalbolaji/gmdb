@@ -6,6 +6,8 @@ import (
 	"log"
 	"net"
 	"os"
+
+	"github.com/spewerspew/spew"
 )
 
 func main() {
@@ -26,13 +28,13 @@ func main() {
 		return
 	}
 
+	fmt.Println("\n---New connection----")
 	defer conn.Close()
 
 	for {
-		buf := make([]byte, 1024)
-
 		// read msg from client
-		_, err := conn.Read(buf)
+		resp := NewResp(conn)
+		ast, err := resp.Read()
 		if err != nil {
 			if err == io.EOF {
 				break
@@ -42,7 +44,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		fmt.Println(string(buf))
+		spew.Dump(ast)
 		conn.Write([]byte("+OK\r\n"))
 	}
 }
