@@ -7,8 +7,19 @@ import (
 	"net"
 	"os"
 
+	"gmdb/parser"
+
 	"github.com/spewerspew/spew"
 )
+
+/*
+	(docs) https://redis.io/docs/reference/protocol-spec/#bulk-strings
+	TODO:
+		- add support for pipelines
+		- add batching
+		- implement pub/sub: subscribe to channels, send messages, etc.
+		- implement transactions
+*/
 
 func main() {
 	const PORT = "6379"
@@ -33,7 +44,7 @@ func main() {
 
 	for {
 		// read msg from client
-		resp := NewResp(conn)
+		resp := parser.NewResp(conn)
 		ast, err := resp.Read()
 		if err != nil {
 			if err == io.EOF {
@@ -45,6 +56,8 @@ func main() {
 		}
 
 		spew.Dump(ast)
-		conn.Write([]byte("+OK\r\n"))
+
+		// just ack request for now
+		parser.Respond(conn)
 	}
 }
