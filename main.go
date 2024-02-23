@@ -10,6 +10,7 @@ import (
 
 	"gmdb/commands"
 	"gmdb/parser"
+	"gmdb/persistence"
 )
 
 /*
@@ -32,6 +33,13 @@ func main() {
 		return
 	}
 
+	aof, err := persistence.NewAof("gmdb.aof")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer aof.Close()
+
 	// accept incoming connections
 	conn, conErr := listener.Accept()
 	if conErr != nil {
@@ -41,6 +49,19 @@ func main() {
 
 	fmt.Println("\n---New connection----")
 	defer conn.Close()
+
+	aof.Read(func(value parser.Value) {
+		command := strings.ToUpper(value.Array[0].Bulk)
+		args := value.Array[1:]
+
+		handler, ok := commands.Handlers[command]
+		if !ok {
+			fmt.Println("Invalid command: ", command)
+			return
+		}
+
+		handler(args)
+	})
 
 	for {
 		// read msg from client
@@ -71,11 +92,14 @@ func main() {
 		writer := parser.NewWriter(conn)
 
 		handler, ok := commands.Handlers[command]
-
 		if !ok {
 			fmt.Println("Invalid command: ", command)
 			writer.Write(parser.Value{Typ: parser.SIMPLE_STRING, Str: ""})
 			continue
+		}
+
+		if command == "SET" || command == "HSET" {
+			aof.Write(ast)
 		}
 
 		writer.Write(handler(args))
