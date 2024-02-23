@@ -5,32 +5,24 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net"
 	"strconv"
 )
 
 const (
-	_simpleString = '+'
-	_bulkString   = '$'
-	_simpleError  = '-'
-	_integer      = ':'
-	_array        = '*'
-	_null         = '_'
-	_clrf         = "\r\n"
+	SIMPLE_STRING = '+'
+	BULK_STRING   = '$'
+	SIMPLE_ERROR  = '-'
+	INTEGER       = ':'
+	ARRAY         = '*'
+	NULL          = '_'
+	CLRF          = "\r\n"
 )
 
 type Value struct {
-	typ    rune
-	str    string
-	bulk   string
-	array  []Value
-	Expose string
-}
-
-func Respond(conn net.Conn) {
-	writer := NewWriter(conn)
-	writer.Write(Value{typ: '+', str: "Ok"})
-
+	Typ   rune
+	Str   string
+	Bulk  string
+	Array []Value
 }
 
 /*
@@ -103,9 +95,9 @@ func (resp *Resp) Read() (Value, error) {
 	}
 
 	switch _type {
-	case _array:
+	case ARRAY:
 		return resp.readArray()
-	case _bulkString:
+	case BULK_STRING:
 		return resp.readBulk()
 	default:
 		fmt.Printf("Unknown type: %v", string(_type))
@@ -116,7 +108,7 @@ func (resp *Resp) Read() (Value, error) {
 // *2\r\n$5\r\nhello\r\n$5\r\nworld\r\n
 func (resp *Resp) readArray() (Value, error) {
 	v := Value{}
-	v.typ = _array
+	v.Typ = ARRAY
 
 	len, err := resp.ReadInteger()
 	if err != nil {
@@ -126,14 +118,14 @@ func (resp *Resp) readArray() (Value, error) {
 	// read clrf
 	resp.reader.ReadBytes('\n')
 
-	v.array = make([]Value, 0)
+	v.Array = make([]Value, 0)
 	for idx := 0; idx < len; idx++ {
 		val, err := resp.Read()
 		if err != nil {
 			return v, err
 		}
 
-		v.array = append(v.array, val)
+		v.Array = append(v.Array, val)
 	}
 
 	return v, nil
@@ -141,7 +133,7 @@ func (resp *Resp) readArray() (Value, error) {
 
 func (resp *Resp) readBulk() (Value, error) {
 	v := Value{}
-	v.typ = _bulkString
+	v.Typ = BULK_STRING
 
 	len, err := resp.ReadInteger()
 	if err != nil {
@@ -153,7 +145,7 @@ func (resp *Resp) readBulk() (Value, error) {
 
 	bulk := make([]byte, len)
 	resp.reader.Read(bulk)
-	v.bulk = string(bulk)
+	v.Bulk = string(bulk)
 
 	// read clrf
 	resp.reader.ReadBytes('\n')
@@ -162,16 +154,16 @@ func (resp *Resp) readBulk() (Value, error) {
 }
 
 func (val Value) Marshal() []byte {
-	switch val.typ {
-	case _simpleError:
+	switch val.Typ {
+	case SIMPLE_ERROR:
 		return val.marshallError()
-	case _null:
+	case NULL:
 		return val.marshallNull()
-	case _simpleString:
+	case SIMPLE_STRING:
 		return val.marshalString()
-	case _bulkString:
+	case BULK_STRING:
 		return val.marshalBulkString()
-	case _array:
+	case ARRAY:
 		return val.marshalArray()
 	default:
 		return []byte{}
@@ -181,9 +173,9 @@ func (val Value) Marshal() []byte {
 func (val Value) marshalString() []byte {
 	var bytes []byte
 
-	bytes = append(bytes, _simpleString)
-	bytes = append(bytes, val.str...)
-	bytes = append(bytes, _clrf...)
+	bytes = append(bytes, SIMPLE_STRING)
+	bytes = append(bytes, val.Str...)
+	bytes = append(bytes, CLRF...)
 
 	return bytes
 }
@@ -191,25 +183,25 @@ func (val Value) marshalString() []byte {
 func (val Value) marshalBulkString() []byte {
 	var bytes []byte
 
-	bytes = append(bytes, _bulkString)
-	bytes = append(bytes, strconv.Itoa(len(val.bulk))...)
-	bytes = append(bytes, _clrf...)
-	bytes = append(bytes, val.bulk...)
-	bytes = append(bytes, _clrf...)
+	bytes = append(bytes, BULK_STRING)
+	bytes = append(bytes, strconv.Itoa(len(val.Bulk))...)
+	bytes = append(bytes, CLRF...)
+	bytes = append(bytes, val.Bulk...)
+	bytes = append(bytes, CLRF...)
 
 	return bytes
 }
 
 func (val Value) marshalArray() []byte {
-	len := len(val.array)
+	len := len(val.Array)
 	var bytes []byte
 
-	bytes = append(bytes, _array)
+	bytes = append(bytes, ARRAY)
 	bytes = append(bytes, strconv.Itoa(len)...)
-	bytes = append(bytes, _clrf...)
+	bytes = append(bytes, CLRF...)
 
 	for i := 0; i < len; i++ {
-		bytes = append(bytes, val.array[i].Marshal()...)
+		bytes = append(bytes, val.Array[i].Marshal()...)
 	}
 
 	return bytes
@@ -217,9 +209,9 @@ func (val Value) marshalArray() []byte {
 
 func (v Value) marshallError() []byte {
 	var bytes []byte
-	bytes = append(bytes, _simpleError)
-	bytes = append(bytes, v.str...)
-	bytes = append(bytes, _clrf...)
+	bytes = append(bytes, SIMPLE_ERROR)
+	bytes = append(bytes, v.Str...)
+	bytes = append(bytes, CLRF...)
 
 	return bytes
 }

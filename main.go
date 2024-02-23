@@ -6,10 +6,10 @@ import (
 	"log"
 	"net"
 	"os"
+	"strings"
 
+	"gmdb/commands"
 	"gmdb/parser"
-
-	"github.com/spewerspew/spew"
 )
 
 /*
@@ -55,9 +55,29 @@ func main() {
 			os.Exit(1)
 		}
 
-		spew.Dump(ast)
+		if ast.Typ != parser.ARRAY {
+			fmt.Println("Invalid request, expected array")
+			continue
+		}
 
-		// just ack request for now
-		parser.Respond(conn)
+		if len(ast.Array) == 0 {
+			fmt.Println("Invalid request, expected array length > 0")
+			continue
+		}
+
+		command := strings.ToUpper(ast.Array[0].Bulk)
+		args := ast.Array[1:]
+
+		writer := parser.NewWriter(conn)
+
+		handler, ok := commands.Handlers[command]
+
+		if !ok {
+			fmt.Println("Invalid command: ", command)
+			writer.Write(parser.Value{Typ: parser.SIMPLE_STRING, Str: ""})
+			continue
+		}
+
+		writer.Write(handler(args))
 	}
 }
