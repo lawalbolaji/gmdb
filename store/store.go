@@ -2,6 +2,7 @@ package store
 
 import (
 	"errors"
+	"gmdb/parser"
 	"sync"
 )
 
@@ -26,31 +27,71 @@ import (
 				get_at key index -> value
 */
 
-var regularStore = map[string]string{}
-var regStoreMtx = sync.RWMutex{}
+var kvStore = map[string]string{}
+var kvStoreMtx = sync.RWMutex{}
+
+type locker interface {
+	Lock()
+	Unlock()
+}
+
+type lockMeta struct {
+	mode uint16 // read (0) or write (1)
+	lock *sync.RWMutex
+}
+
+func (mtx *lockMeta) Lock() {
+	if mtx.mode == 0 {
+		mtx.lock.RLock()
+		return
+	}
+
+	mtx.lock.Lock()
+}
+
+func (mtx *lockMeta) Unlock() {
+	if mtx.mode == 0 {
+		mtx.lock.RUnlock()
+		return
+	}
+
+	mtx.lock.Unlock()
+}
+
+var commandLocks = map[string]*lockMeta{
+	"GET":     {mode: 0, lock: &kvStoreMtx},
+	"HGET":    {mode: 0, lock: &hashStoreMtx},
+	"HGETALL": {mode: 0, lock: &hashStoreMtx},
+	"SET":     {mode: 1, lock: &kvStoreMtx},
+	"HSET":    {mode: 1, lock: &hashStoreMtx},
+}
+
+func GetRequiredLocks(commands [][]parser.Value) []locker {
+	lockers := make([]locker, 0)
+
+	for _, command := range commands {
+		lockMeta, ok := commandLocks[command[0].Bulk]
+		if ok {
+			lockers = append(lockers, lockMeta)
+		}
+	}
+
+	return lockers
+}
 
 func GetValFromKVStore(key string) (string, bool) {
-	regStoreMtx.RLock()
-	defer regStoreMtx.RUnlock()
-
-	value, ok := regularStore[key]
+	value, ok := kvStore[key]
 	return value, ok
 }
 
 func SetValInKVStore(key string, val string) {
-	regStoreMtx.Lock()
-	defer regStoreMtx.Unlock()
-
-	regularStore[key] = val
+	kvStore[key] = val
 }
 
 var hashStore = map[string]map[string]string{}
 var hashStoreMtx = sync.RWMutex{}
 
 func SetValInHashStore(key string, hashKey string, val string) {
-	hashStoreMtx.Lock()
-	defer hashStoreMtx.Unlock()
-
 	if _, ok := hashStore[key]; !ok {
 		hashStore[key] = map[string]string{}
 	}
@@ -59,17 +100,11 @@ func SetValInHashStore(key string, hashKey string, val string) {
 }
 
 func GetValFromHashStore(key string, hashKey string) (string, bool) {
-	hashStoreMtx.RLock()
-	defer hashStoreMtx.RUnlock()
-
 	val, ok := hashStore[key][hashKey]
 	return val, ok
 }
 
 func GetAllKeysAndValFromHashStore(key string) ([]string, error) {
-	hashStoreMtx.RLock()
-	defer hashStoreMtx.RUnlock()
-
 	hashTable, ok := hashStore[key]
 	if !ok {
 		return []string{}, errors.New("invalid key")
