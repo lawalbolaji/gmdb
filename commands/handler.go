@@ -20,6 +20,7 @@ var Handlers = map[string]func([]parser.Value) parser.Value{
 	"HGET":    hget,
 	"HSET":    hset,
 	"HGETALL": hgetAll,
+	"MULTI":   multi,
 }
 
 func set(args []parser.Value) parser.Value {
@@ -94,4 +95,12 @@ func hgetAll(args []parser.Value) parser.Value {
 	}
 
 	return result
+}
+
+func multi(args []parser.Value) parser.Value {
+	if len(args) != 0 {
+		return parser.Value{Typ: parser.SIMPLE_ERROR, Str: "ERR multi does not take arguments"}
+	}
+
+	return parser.Value{Typ: parser.BULK_STRING, Bulk: "ok"}
 }
