@@ -10,16 +10,15 @@ import (
 
 	"gmdb/commands"
 	"gmdb/parser"
-	"gmdb/persistence"
 )
 
 /*
 	(docs) https://redis.io/docs/reference/protocol-spec/#bulk-strings
 	TODO:
-		- add support for pipelines
-		- add batching
+	- implement transactions
 		- implement pub/sub: subscribe to channels, send messages, etc.
-		- implement transactions
+		- implement rdb persistence
+		- allow users to choose persistence modes
 */
 
 func main() {
@@ -33,35 +32,15 @@ func main() {
 		return
 	}
 
-	aof, err := persistence.NewAof("gmdb.aof")
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer aof.Close()
-
 	// accept incoming connections
-	conn, conErr := listener.Accept()
-	if conErr != nil {
-		log.Fatal(conErr)
+	conn, err := listener.Accept()
+	if err != nil {
+		log.Fatal(err)
 		return
 	}
 
 	fmt.Println("\n---New connection----")
 	defer conn.Close()
-
-	aof.Read(func(value parser.Value) {
-		command := strings.ToUpper(value.Array[0].Bulk)
-		args := value.Array[1:]
-
-		handler, ok := commands.Handlers[command]
-		if !ok {
-			fmt.Println("Invalid command: ", command)
-			return
-		}
-
-		handler(args)
-	})
 
 	for {
 		// read msg from client
@@ -96,10 +75,6 @@ func main() {
 			fmt.Println("Invalid command: ", command)
 			writer.Write(parser.Value{Typ: parser.SIMPLE_STRING, Str: ""})
 			continue
-		}
-
-		if command == "SET" || command == "HSET" {
-			aof.Write(ast)
 		}
 
 		writer.Write(handler(args))
