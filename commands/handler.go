@@ -14,11 +14,12 @@ func ping(args []parser.Value) parser.Value {
 }
 
 var Handlers = map[string]func([]parser.Value) parser.Value{
-	"PING": ping,
-	"SET":  set,
-	"GET":  get,
-	"HGET": hget,
-	"HSET": hset,
+	"PING":    ping,
+	"SET":     set,
+	"GET":     get,
+	"HGET":    hget,
+	"HSET":    hset,
+	"HGETALL": hgetAll,
 }
 
 func set(args []parser.Value) parser.Value {
@@ -76,5 +77,21 @@ func hget(args []parser.Value) parser.Value {
 	return parser.Value{Typ: parser.BULK_STRING, Bulk: val}
 }
 
-// TODO: implement hgetAll
-// func hgetAll(args []parser.Value) parser.Value {}
+func hgetAll(args []parser.Value) parser.Value {
+	if len(args) != 1 {
+		return parser.Value{Typ: parser.SIMPLE_ERROR, Str: "ERR wrong number of arguments for 'hgetall' command"}
+	}
+
+	key := args[0].Bulk
+	keysAndVal, err := store.GetAllKeysAndValFromHashStore(key)
+	if err != nil {
+		return parser.Value{Typ: parser.BULK_STRING, Bulk: err.Error()}
+	}
+
+	result := parser.Value{Typ: parser.ARRAY}
+	for _, val := range keysAndVal {
+		result.Array = append(result.Array, parser.Value{Typ: parser.BULK_STRING, Bulk: val})
+	}
+
+	return result
+}

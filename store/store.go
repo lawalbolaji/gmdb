@@ -1,6 +1,7 @@
 package store
 
 import (
+	"errors"
 	"sync"
 )
 
@@ -63,4 +64,26 @@ func GetValFromHashStore(key string, hashKey string) (string, bool) {
 
 	val, ok := hashStore[key][hashKey]
 	return val, ok
+}
+
+func GetAllKeysAndValFromHashStore(key string) ([]string, error) {
+	hashStoreMtx.RLock()
+	defer hashStoreMtx.RUnlock()
+
+	hashTable, ok := hashStore[key]
+	if !ok {
+		return []string{}, errors.New("invalid key")
+	}
+
+	keysAndVal := make([]string, len(hashTable)*2)
+	idx := 0
+
+	for key, val := range hashTable {
+		keysAndVal[idx] = key
+		idx++
+		keysAndVal[idx] = val
+		idx++
+	}
+
+	return keysAndVal, nil
 }
