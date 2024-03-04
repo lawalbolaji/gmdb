@@ -18,13 +18,6 @@ const (
 	CLRF          = "\r\n"
 )
 
-type Value struct {
-	Typ   rune
-	Str   string
-	Bulk  string
-	Array []Value
-}
-
 /*
 	{
 		typ: array,
@@ -39,8 +32,13 @@ type Value struct {
 			}
 		]
 	}
-
 */
+type Value struct {
+	Typ   rune
+	Str   string
+	Bulk  string
+	Array []Value
+}
 
 type Writer struct {
 	writer io.Writer
