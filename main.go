@@ -13,5 +13,6 @@ import (
 */
 
 func main() {
-	tcp.CreateConnectionManager("6379")
+	const port = "6379"
+	tcp.CreateConnectionManager(port)
 }
