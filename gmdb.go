@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gmdb/tcp"
+	"github.com/lawalbolaji/gmdb/tcp"
 )
 
 /*
