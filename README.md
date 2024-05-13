@@ -2,7 +2,8 @@
 
 GMDB is an memory database server that is compatible with redis clients. It was developed as a way to learn the internals of Redis and for general education, and is not intended to be used as a production server.
 
-![demo](https://github.com/lawalbolaji/gmdb/blob/main/docs/media/Screen%20Recording%202024-05-13%20at%2014.mp4)
+![gmdb demo](https://github.com/lawalbolaji/gmdb/assets/22568024/1a91fac9-412b-491c-8fbc-ae5a1d8e2c55)
+
 
 ## ✨ Features
 
