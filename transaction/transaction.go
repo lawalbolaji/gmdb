@@ -1,10 +1,11 @@
 package transaction
 
 import (
-	"gmdb/commands"
-	"gmdb/parser"
-	"gmdb/store"
 	"strings"
+
+	"github.com/lawalbolaji/gmdb/commands"
+	"github.com/lawalbolaji/gmdb/parser"
+	"github.com/lawalbolaji/gmdb/store"
 )
 
 type commandQueue struct {

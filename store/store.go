@@ -2,8 +2,9 @@ package store
 
 import (
 	"errors"
-	"gmdb/parser"
 	"sync"
+
+	"github.com/lawalbolaji/gmdb/parser"
 )
 
 /*

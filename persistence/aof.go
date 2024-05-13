@@ -2,11 +2,12 @@ package persistence
 
 import (
 	"bufio"
-	"gmdb/parser"
 	"io"
 	"os"
 	"sync"
 	"time"
+
+	"github.com/lawalbolaji/gmdb/parser"
 )
 
 type Aof struct {

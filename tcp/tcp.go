@@ -4,14 +4,15 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"gmdb/commands"
-	"gmdb/parser"
-	"gmdb/store"
-	"gmdb/transaction"
 	"log"
 	"net"
 	"strings"
 	"time"
+
+	"github.com/lawalbolaji/gmdb/commands"
+	"github.com/lawalbolaji/gmdb/parser"
+	"github.com/lawalbolaji/gmdb/store"
+	"github.com/lawalbolaji/gmdb/transaction"
 )
 
 func CreateConnectionManager(port string) {

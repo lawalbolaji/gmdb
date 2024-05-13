@@ -1,8 +1,8 @@
 package commands
 
 import (
-	"gmdb/parser"
-	"gmdb/store"
+	"github.com/lawalbolaji/gmdb/parser"
+	"github.com/lawalbolaji/gmdb/store"
 )
 
 func ping(args []parser.Value) parser.Value {
