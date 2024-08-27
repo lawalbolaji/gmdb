@@ -57,7 +57,7 @@ func execCommandsInQueue(q *commandQueue) parser.Value {
 	}
 
 	for range q.size() {
-		commandWithArg, _ := q.dequeue() // the "ok" check is redundant since the for loop only runs for the length of the queue
+		commandWithArg, _ := q.dequeue() // this check is redundant since the for loop only runs for the length of the queue
 		command := strings.ToUpper(commandWithArg[0].Bulk)
 		args := commandWithArg[1:]
 
